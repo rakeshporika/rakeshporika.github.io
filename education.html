@@ -20,6 +20,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script>
+        // Enables scroll reveals; falls back to CSS-only reveals if script.js never arrives.
+        document.documentElement.classList.add('js');
+        setTimeout(function () {
+            if (!window.__siteReady) document.documentElement.classList.remove('js');
+        }, 3000);
+    </script>
 
     <style>
         .page-container {

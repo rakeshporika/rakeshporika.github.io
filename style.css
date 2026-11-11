@@ -20,6 +20,28 @@
     --radius-pill: 999px;
     --font-display: 'Figtree', 'Inter', sans-serif;
     --font-body: 'Inter', sans-serif;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- PAGE TRANSITIONS ---
+   Cross-fades between pages while the nav bar stays put and the active-link
+   underline slides to its new position. Browsers without cross-document view
+   transitions simply navigate as before. */
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(root) {
+    animation-duration: 0.18s;
+}
+
+::view-transition-new(root) {
+    animation-duration: 0.32s;
+}
+
+::view-transition-group(nav-indicator) {
+    animation-duration: 0.38s;
+    animation-timing-function: var(--ease-out);
 }
 
 /* --- RESET --- */
@@ -30,6 +52,20 @@
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 90px;
+}
+
+/* Lenis smooth scrolling (desktop only, loaded by script.js) */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+html.lenis {
+    scroll-behavior: auto;
+}
+
+.lenis.lenis-stopped {
+    overflow: clip;
 }
 
 body {
@@ -83,6 +119,12 @@ main {
     z-index: -1;
     background-color: transparent;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+#webgl.is-ready {
+    opacity: 1;
 }
 
 /* --- ACCESSIBILITY --- */
@@ -121,14 +163,23 @@ button:focus-visible {
     width: fit-content;
 }
 
-/* --- REVEAL ANIMATIONS --- */
+/* --- REVEAL ANIMATIONS ---
+   Without JS, items fade in on load with the staggered delays below.
+   With JS (html.js), script.js reveals each item as it scrolls into view. */
 @keyframes softReveal {
-    0% { opacity: 0; transform: translateY(30px) scale(0.98); filter: blur(10px); }
-    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    0% { opacity: 0; transform: translateY(22px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 .reveal-1, .reveal-2, .reveal-3, .reveal-4, .reveal-5, .reveal-6 {
-    animation: softReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: softReveal 0.7s var(--ease-out) both;
+}
+
+html.js :is(.reveal-1, .reveal-2, .reveal-3, .reveal-4, .reveal-5, .reveal-6) {
+    animation: none;
+}
+
+html.js :is(.reveal-1, .reveal-2, .reveal-3, .reveal-4, .reveal-5, .reveal-6, .timeline-item, .mini-card):not(.is-visible) {
     opacity: 0;
 }
 
@@ -144,9 +195,16 @@ button:focus-visible {
         scroll-behavior: auto;
     }
 
+    @view-transition {
+        navigation: none;
+    }
+
     .reveal-1, .reveal-2, .reveal-3, .reveal-4, .reveal-5, .reveal-6 {
         animation: none;
-        opacity: 1;
+    }
+
+    #webgl {
+        transition: none;
     }
 
     *, *::before, *::after {
@@ -169,6 +227,13 @@ nav {
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+    view-transition-name: site-nav;
+}
+
+nav.is-scrolled {
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 8px 28px rgba(10, 36, 77, 0.08);
 }
 
 .logo {
@@ -189,18 +254,40 @@ nav {
     font-weight: 600;
     font-size: 0.95rem;
     margin-left: 2rem;
-    padding-bottom: 4px;
-    transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-    border-bottom: 2px solid transparent;
+    padding-bottom: 6px;
+    position: relative;
+    transition: color 0.2s ease-in-out;
+}
+
+.nav-item::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--brand);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.3s var(--ease-out);
 }
 
 .nav-item:hover {
     color: var(--brand);
 }
 
+.nav-item:hover::after {
+    transform: scaleX(1);
+}
+
 .nav-item.active {
     color: var(--brand);
-    border-bottom: 2px solid var(--brand);
+}
+
+.nav-item.active::after {
+    transform: scaleX(1);
+    view-transition-name: nav-indicator;
 }
 
 .hamburger {
@@ -214,6 +301,11 @@ nav {
     background: rgba(255, 255, 255, 0.84);
     color: var(--brand);
     cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.hamburger:active {
+    transform: scale(0.94);
 }
 
 .hamburger i {
@@ -226,6 +318,7 @@ nav {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    min-height: 100svh;
     padding: 110px 10% 3rem;
     gap: 5rem;
     position: relative;
@@ -302,7 +395,7 @@ nav {
     -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 70%);
     mask-image: radial-gradient(ellipse at center, black 40%, transparent 70%);
     opacity: 0.95;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: transform 0.5s var(--ease-out), opacity 0.3s ease;
 }
 
 .hero-image img:hover {
@@ -435,18 +528,18 @@ nav {
 .card-content {
     flex: 1;
     margin-left: 20px;
-    background: rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    /* No backdrop blur here: it would be recomputed every frame over the
+       animated canvas, for every card on screen. */
+    background: rgba(255, 255, 255, 0.88);
     border-radius: var(--radius-card);
     padding: 1.75rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.35s var(--ease-out), background 0.3s ease, box-shadow 0.35s ease;
 }
 
 .card-content:hover {
     transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 15px 50px rgba(0, 86, 179, 0.1);
 }
 
@@ -555,9 +648,7 @@ nav {
 
 .section-card {
     grid-column: span 12;
-    background: rgba(255, 255, 255, 0.74);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    background: rgba(255, 255, 255, 0.84);
     border-radius: 32px;
     padding: 1.75rem;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
@@ -630,7 +721,7 @@ nav {
     border-radius: 24px;
     padding: 1.35rem 1.4rem;
     box-shadow: 0 8px 24px rgba(0, 86, 179, 0.06);
-    transition: transform 0.28s ease, background 0.28s ease, box-shadow 0.28s ease;
+    transition: transform 0.35s var(--ease-out), background 0.28s ease, box-shadow 0.35s ease;
 }
 
 .timeline-content:hover {
@@ -682,12 +773,13 @@ nav {
     border-radius: 24px;
     padding: 1.3rem;
     box-shadow: 0 8px 24px rgba(0, 86, 179, 0.06);
-    transition: transform 0.28s ease, background 0.28s ease;
+    transition: transform 0.35s var(--ease-out), background 0.28s ease, box-shadow 0.35s ease;
 }
 
 .mini-card:hover {
     transform: translateY(-3px);
     background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 14px 34px rgba(0, 86, 179, 0.12);
 }
 
 .mini-top {
@@ -972,7 +1064,11 @@ footer {
         margin-left: 0;
         padding: 0.8rem 0.95rem;
         border-radius: 14px;
-        border-bottom: none;
+        transition: color 0.2s ease-in-out, background 0.2s ease-in-out;
+    }
+
+    .nav-links .nav-item::after {
+        display: none;
     }
 
     .nav-links .nav-item:hover,
